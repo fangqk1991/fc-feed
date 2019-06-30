@@ -1,5 +1,5 @@
-// const DBProtocol = require('fc-sql/DBProtocol')
 const DBTools = require('fc-sql/DBTools')
+const DBProtocol = require('./DBProtocol')
 const assert = require('assert')
 
 class FeedSearcher {
@@ -8,7 +8,7 @@ class FeedSearcher {
    */
   constructor(modelInstance) {
     const protocol = modelInstance.dbProtocol()
-    // assert.ok(protocol instanceof DBProtocol, `${modelInstance.constructor.name} must implements DBProtocol`)
+    assert.ok(protocol instanceof DBProtocol, `${modelInstance.constructor.name} must implements DBProtocol`)
     const searcher = protocol.database().searcher()
     searcher.setTable(protocol.table())
     searcher.setColumns(protocol.cols())

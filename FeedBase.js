@@ -1,5 +1,5 @@
-const FCModel = require('fc-model')
 const DBTools = require('fc-sql/DBTools')
+const FCModel = require('fc-model')
 const assert = require('assert')
 
 class FeedBase extends FCModel {
