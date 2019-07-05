@@ -1,9 +1,6 @@
-import { DBProtocol, SQLSearcher } from 'fc-sql'
+import { DBProtocol, DBTools, SQLSearcher } from 'fc-sql'
 import { FeedBase } from './FeedBase'
-
-const DBTools = require('fc-sql/DBTools')
-const DBProtocol = require('./DBProtocol')
-const assert = require('assert')
+import * as assert from 'assert'
 
 export class FeedSearcher {
   private readonly _searcher: SQLSearcher
@@ -25,7 +22,7 @@ export class FeedSearcher {
     return this._searcher
   }
 
-  async querySingle(retFeed = true): Promise<null | FeedBase | {}> {
+  async querySingle(retFeed = true): Promise<null | FeedBase | {[p: string]: any}> {
     const items = await this.queryList(0, 1, retFeed)
     if (items.length > 0) {
       return items[0]
@@ -33,11 +30,11 @@ export class FeedSearcher {
     return null
   }
 
-  async queryAll(retFeed: boolean = false): Promise<({} | FeedBase)[]> {
+  async queryAll(retFeed: boolean = false): Promise<({[p: string]: any} | FeedBase)[]> {
     return this.queryList(-1, 0, retFeed)
   }
 
-  async queryList(page: number, length: number, retFeed: boolean = false): Promise<({} | FeedBase)[]> {
+  async queryList(page: number, length: number, retFeed: boolean = false): Promise<({[p: string]: any} | FeedBase)[]> {
     this._searcher.setPageInfo(page, length)
     const items = await this._searcher.queryList()
     return this.formatList(items, retFeed)
@@ -47,8 +44,8 @@ export class FeedSearcher {
     return this._searcher.queryCount()
   }
 
-  formatList(items: {}[], retFeed = false): ({} | FeedBase)[] {
-    return items.map((dic: {}): {} | FeedBase => {
+  formatList(items: {}[], retFeed = false): ({[p: string]: any} | FeedBase)[] {
+    return items.map((dic: {}): {[p: string]: any} | FeedBase => {
       const obj = new this._model()
       obj.fc_generate(dic)
       return retFeed ? obj : obj.fc_retMap()

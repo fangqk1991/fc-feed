@@ -42,6 +42,7 @@ module.exports = {
     '@typescript-eslint/indent': 'off',
     '@typescript-eslint/explicit-member-accessibility': 'off',
     '@typescript-eslint/camelcase': 'off',
+    '@typescript-eslint/class-name-casing': 'off',
     '@typescript-eslint/no-var-requires': 'off',
     'no-debugger': process.env.NODE_ENV === 'production' ? 'error' : 'off'
   }
