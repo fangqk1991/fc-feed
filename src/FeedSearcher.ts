@@ -1,34 +1,31 @@
+import { DBProtocol, SQLSearcher } from 'fc-sql'
+import { FeedBase } from './FeedBase'
+
 const DBTools = require('fc-sql/DBTools')
 const DBProtocol = require('./DBProtocol')
 const assert = require('assert')
 
-class FeedSearcher {
-  /**
-   * @param modelInstance {FeedBase}
-   */
-  constructor(modelInstance) {
+export class FeedSearcher {
+  private readonly _searcher: SQLSearcher
+  private readonly _protocol: DBProtocol
+  private readonly _model: { new(): FeedBase }
+
+  constructor(modelInstance: FeedBase) {
     const protocol = modelInstance.dbProtocol()
-    assert.ok(protocol instanceof DBProtocol, `${modelInstance.constructor.name} must implements DBProtocol`)
+    assert.ok(!!protocol, `${modelInstance.constructor.name} must have DBProtocol`)
     const searcher = protocol.database().searcher()
     searcher.setTable(protocol.table())
     searcher.setColumns(protocol.cols())
     this._searcher = searcher
     this._protocol = protocol
-    this._model = modelInstance.constructor
+    this._model = modelInstance.constructor as { new(): FeedBase }
   }
 
-  /**
-   * @returns {SQLSearcher}
-   */
-  processor() {
+  processor(): SQLSearcher {
     return this._searcher
   }
 
-  /**
-   * @param retFeed
-   * @returns {Promise<null|FeedBase>}
-   */
-  async querySingle(retFeed = true) {
+  async querySingle(retFeed = true): Promise<null | FeedBase | {}> {
     const items = await this.queryList(0, 1, retFeed)
     if (items.length > 0) {
       return items[0]
@@ -36,63 +33,35 @@ class FeedSearcher {
     return null
   }
 
-  /**
-   * @param retFeed {Boolean}
-   * @returns {Promise<Array>}
-   */
-  async queryAll(retFeed = false) {
+  async queryAll(retFeed: boolean = false): Promise<({} | FeedBase)[]> {
     return this.queryList(-1, 0, retFeed)
   }
 
-  /**
-   * @param page {Number}
-   * @param length {Number}
-   * @param retFeed {Boolean}
-   * @returns {Promise<Array>}
-   */
-  async queryList(page, length, retFeed = false) {
+  async queryList(page: number, length: number, retFeed: boolean = false): Promise<({} | FeedBase)[]> {
     this._searcher.setPageInfo(page, length)
     const items = await this._searcher.queryList()
     return this.formatList(items, retFeed)
   }
 
-  /**
-   * @returns {Promise<Number>}
-   */
-  async queryCount() {
+  async queryCount(): Promise<number> {
     return this._searcher.queryCount()
   }
 
-  /**
-   * @param items
-   * @param retFeed
-   * @returns {Array}
-   */
-  formatList(items, retFeed = false) {
-    return items.map(dic => {
+  formatList(items: {}[], retFeed = false): ({} | FeedBase)[] {
+    return items.map((dic: {}): {} | FeedBase => {
       const obj = new this._model()
       obj.fc_generate(dic)
       return retFeed ? obj : obj.fc_retMap()
     })
   }
 
-  /**
-   * @param params {Object}
-   * @param checkPrimaryKey {Boolean}
-   * @returns {Promise<FeedBase>}
-   */
-  async prepareWithParams(params, checkPrimaryKey = true) {
+  async prepareWithParams(params: {}, checkPrimaryKey: boolean = true): Promise<FeedBase | null> {
     const obj = await this.findWithParams(params, checkPrimaryKey)
     assert.ok(!!obj, `${this.constructor.name}: object not found.`)
     return obj
   }
 
-  /**
-   * @param params {Object}
-   * @param checkPrimaryKey {Boolean}
-   * @returns {Promise<FeedBase|null>}
-   */
-  async findWithParams(params, checkPrimaryKey = true) {
+  async findWithParams(params: {}, checkPrimaryKey = true): Promise<null | FeedBase> {
     const tools = new DBTools(this._protocol)
     const data = await tools.searchSingle(params, checkPrimaryKey)
     if (data) {
@@ -103,45 +72,32 @@ class FeedSearcher {
     return null
   }
 
-  /**
-   * @param uid
-   * @returns {Promise<FeedBase>}
-   */
-  async prepareWithUID(uid) {
+  async prepareWithUID(uid: string | number): Promise<FeedBase | null | undefined> {
     const obj = await this.findWithUID(uid)
     assert.ok(!!obj, `${this.constructor.name}: object not found.`)
     return obj
   }
 
-  /**
-   * @param uid {String}
-   * @returns {Promise<FeedBase|null>}
-   */
-  async findWithUID(uid) {
+  async findWithUID(uid: string | number): Promise<FeedBase | null | undefined> {
     const pKey = this._protocol.primaryKey()
     if (typeof pKey === 'string') {
-      const params = {}
-      params[pKey] = uid
+      const params: {[p: string]: any} = {}
+      params[pKey as string] = uid
       return this.findWithParams(params)
     }
     assert.fail(`${this._model.name}: primary key is not single.`)
   }
 
-  /**
-   * @param params {Object|string|Number}
-   * @returns {Promise<boolean>}
-   */
-  async checkExists(params) {
+  async checkExists(params: {[p: string]: any} | string | number): Promise<boolean> {
     if (typeof params !== 'object') {
       const pKey = this._protocol.primaryKey()
       assert.ok(typeof pKey === 'string', `${this.constructor.name}: primaryKey must be an string.`)
       const uid = params
-      params = {}
-      params[pKey] = uid
+      const params1: {[p: string]: any} = {}
+      params1[pKey as string] = uid
+      params = params1
     }
     const tools = new DBTools(this._protocol)
     return (await tools.fetchCount(params)) > 0
   }
 }
-
-module.exports = FeedSearcher
