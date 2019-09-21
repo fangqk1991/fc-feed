@@ -7,6 +7,9 @@ interface MapProtocol {
   [p: string]: any;
 }
 
+/**
+ * @description When FeedBase's DBProtocol exists, the sql functions would take effect
+ */
 export class FeedBase extends FCModel {
   protected _dbProtocol: DBProtocol|null = null
   protected _dataBackup: {[p: string]: any}|null = null
@@ -15,10 +18,16 @@ export class FeedBase extends FCModel {
     super()
   }
 
+  /**
+   * @description Sub class can override the function.
+   */
   dbProtocol(): DBProtocol {
     return this._dbProtocol as DBProtocol
   }
 
+  /**
+   * @description Return primary-key, when th db-protocol has multi-primary-keys, method will use ',' join the keys then return.
+   */
   fc_uidStr(): string {
     const data = this.fc_encode()
     assert.ok(!!this._dbProtocol, 'this._dbProtocol must be an instance of DBProtocol')
@@ -34,6 +43,9 @@ export class FeedBase extends FCModel {
     return uid
   }
 
+  /**
+   * @description Insert model data to database.
+   */
   async fc_add(): Promise<void> {
     const data = this.fc_encode()
     if (this._dbProtocol) {
@@ -42,6 +54,9 @@ export class FeedBase extends FCModel {
     }
   }
 
+  /**
+   * @description Use the editing mode
+   */
   fc_edit(): void {
     this._dataBackup = this.fc_encode()
   }
@@ -62,6 +77,9 @@ export class FeedBase extends FCModel {
     return false
   }
 
+  /**
+   * @description Must use fc_edit before fc_update, changes in editing mode will be pass to database, (Should match primary key).
+   */
   async fc_update(options: {[p: string]: any} = {}): Promise<{}> {
     assert.ok(!!this._dataBackup, 'You must use fc_edit before fc_update!')
 
@@ -111,6 +129,9 @@ export class FeedBase extends FCModel {
     return editedMap
   }
 
+  /**
+   * @description Delete record in database, (Should match primary key).
+   */
   async fc_delete(): Promise<void> {
     const data = this.fc_encode()
     if (this._dbProtocol) {
@@ -119,6 +140,10 @@ export class FeedBase extends FCModel {
     }
   }
 
+  /**
+   * @description Return a FeedSearcher for current model class.
+   * @param params
+   */
   // eslint-disable-next-line no-unused-vars,@typescript-eslint/no-unused-vars
   fc_searcher(params: {[p: string]: any} = {}): FeedSearcher {
     return new FeedSearcher(this)

@@ -22,6 +22,11 @@ export class FeedSearcher {
     return this._searcher
   }
 
+  /**
+   * @deprecated Return model instance is recommended, please use queryOne instead.
+   * @description Query single object, return an model instance when retFeed = true
+   * @param retFeed
+   */
   async querySingle(retFeed = true): Promise<null | FeedBase | {[p: string]: any}> {
     const items = await this.queryList(0, 1, retFeed)
     if (items.length > 0) {
@@ -30,34 +35,98 @@ export class FeedSearcher {
     return null
   }
 
+  /**
+   * @deprecated Return model instance is recommended, please use queryAllFeeds instead.
+   * @param retFeed {boolean}
+   */
   async queryAll(retFeed: boolean = false): Promise<({[p: string]: any} | FeedBase)[]> {
     return this.queryList(-1, 0, retFeed)
   }
 
+  /**
+   * @deprecated Return model instance is recommended, please use queryListWithPageInfo instead.
+   * @param page {number}
+   * @param length {number}
+   * @param retFeed {boolean}
+   */
   async queryList(page: number, length: number, retFeed: boolean = false): Promise<({[p: string]: any} | FeedBase)[]> {
     this._searcher.setPageInfo(page, length)
     const items = await this._searcher.queryList()
     return this.formatList(items, retFeed)
   }
 
-  async queryCount(): Promise<number> {
-    return this._searcher.queryCount()
-  }
-
   formatList(items: {}[], retFeed = false): ({[p: string]: any} | FeedBase)[] {
     return items.map((dic: {}): {[p: string]: any} | FeedBase => {
       const obj = new this._model()
       obj.fc_generate(dic)
-      return retFeed ? obj : obj.fc_retMap()
+      return retFeed ? obj : obj.fc_encode()
     })
   }
 
+  /**
+   * @description Return record count.
+   */
+  async queryCount(): Promise<number> {
+    return this._searcher.queryCount()
+  }
+
+  /**
+   * @description Return a model instance.
+   */
+  async queryOne(): Promise<null | FeedBase> {
+    const items = await this.queryListWithLimitInfo(0, 1)
+    if (items.length > 0) {
+      return items[0]
+    }
+    return null
+  }
+
+  /**
+   * @description Return model list, pass page index and lengthPerPage to build limit info, page's first index is 0.
+   * @param page {number}
+   * @param lengthPerPage {number}
+   */
+  async queryListWithPageInfo(page: number, lengthPerPage: number): Promise<FeedBase[]> {
+    this._searcher.setPageInfo(page, lengthPerPage)
+    const items = await this._searcher.queryList()
+    return this.formatList(items, true) as FeedBase[]
+  }
+
+  /**
+   * @description Return model list, pass offset and length to build limit info.
+   * @param offset {number}
+   * @param length {number}
+   */
+  async queryListWithLimitInfo(offset: number, length: number): Promise<FeedBase[]> {
+    this._searcher.setLimitInfo(offset, length)
+    const items = await this._searcher.queryList()
+    return this.formatList(items, true) as FeedBase[]
+  }
+
+  /**
+   * @description Return model list
+   */
+  async queryAllFeeds(): Promise<FeedBase[]> {
+    const items = await this._searcher.queryList()
+    return this.formatList(items, true) as FeedBase[]
+  }
+
+  /**
+   * @description Like findWithParams, but it will throw an error if object does not exist.
+   * @param params
+   * @param checkPrimaryKey
+   */
   async prepareWithParams(params: {}, checkPrimaryKey: boolean = true): Promise<FeedBase | null> {
     const obj = await this.findWithParams(params, checkPrimaryKey)
     assert.ok(!!obj, `${this.constructor.name}: object not found.`)
     return obj
   }
 
+  /**
+   * @description Find model with { key => value } conditions, and return first object. "checkPrimaryKey = true" means it will check the primaryKeys defined in protocol.
+   * @param params
+   * @param checkPrimaryKey {boolean}
+   */
   async findWithParams(params: {}, checkPrimaryKey = true): Promise<null | FeedBase> {
     const tools = new DBTools(this._protocol)
     const data = await tools.searchSingle(params, checkPrimaryKey)
@@ -69,12 +138,20 @@ export class FeedSearcher {
     return null
   }
 
+  /**
+   * @description Like findWithUID, but it will throw an error if object does not exist.
+   * @param uid {string | number}
+   */
   async prepareWithUID(uid: string | number): Promise<FeedBase | null | undefined> {
     const obj = await this.findWithUID(uid)
     assert.ok(!!obj, `${this.constructor.name}: object not found.`)
     return obj
   }
 
+  /**
+   * @description Find Model which single-primary-key
+   * @param uid {string | number}
+   */
   async findWithUID(uid: string | number): Promise<FeedBase | null | undefined> {
     const pKey = this._protocol.primaryKey()
     if (typeof pKey === 'string') {
