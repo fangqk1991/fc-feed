@@ -1,4 +1,4 @@
-import { FeedBase } from '../../src'
+import { DBObserver, FeedBase } from '../../src'
 import { DBProtocol, FCDatabase } from 'fc-sql'
 
 const database = FCDatabase.getInstance()
@@ -46,6 +46,20 @@ class MyProtocol implements DBProtocol {
   }
 }
 
+class MyObserver implements DBObserver {
+  async onAdd(newFeed: FeedBase): Promise<void> {
+    console.log(`onAdd: `, newFeed)
+  }
+
+  async onDelete(oldFeed: FeedBase): Promise<void> {
+    console.log(`onDelete: `, oldFeed)
+  }
+
+  async onUpdate(newFeed: FeedBase, changedMap: any): Promise<void> {
+    console.log(`onUpdate: `, newFeed, changedMap)
+  }
+}
+
 export default class DemoTable extends FeedBase {
   uid: any = null
   key1: any = null
@@ -54,6 +68,7 @@ export default class DemoTable extends FeedBase {
   constructor() {
     super()
     this._dbProtocol = new MyProtocol()
+    this.dbObserver = new MyObserver()
   }
 
   fc_propertyMapper(): { [p: string]: string } {

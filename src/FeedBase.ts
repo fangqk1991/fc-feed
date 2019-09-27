@@ -7,12 +7,19 @@ interface MapProtocol {
   [p: string]: any;
 }
 
+export interface DBObserver {
+  onAdd(newFeed: FeedBase): Promise<void>;
+  onUpdate(newFeed: FeedBase, changedMap: any, oldData?: any): Promise<void>;
+  onDelete(oldFeed: FeedBase): Promise<void>;
+}
+
 /**
  * @description When FeedBase's DBProtocol exists, the sql functions would take effect
  */
 export class FeedBase extends FCModel {
-  protected _dbProtocol: DBProtocol|null = null
+  protected _dbProtocol: DBProtocol | null = null
   protected _dataBackup: {[p: string]: any}|null = null
+  public dbObserver: DBObserver | null = null
 
   constructor() {
     super()
@@ -51,6 +58,10 @@ export class FeedBase extends FCModel {
     if (this._dbProtocol) {
       const tools = new DBTools(this._dbProtocol)
       await tools.add(data)
+
+      if (this.dbObserver) {
+        await this.dbObserver.onAdd(this)
+      }
     }
   }
 
@@ -124,6 +135,10 @@ export class FeedBase extends FCModel {
       })
       const tools = new DBTools(this._dbProtocol)
       await tools.update(params)
+
+      if (this.dbObserver) {
+        await this.dbObserver.onUpdate(this, editedMap, this._dataBackup)
+      }
     }
     this._dataBackup = null
     return editedMap
@@ -137,6 +152,10 @@ export class FeedBase extends FCModel {
     if (this._dbProtocol) {
       const tools = new DBTools(this._dbProtocol)
       await tools.delete(data)
+
+      if (this.dbObserver) {
+        await this.dbObserver.onDelete(this)
+      }
     }
   }
 
