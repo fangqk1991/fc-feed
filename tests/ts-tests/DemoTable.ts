@@ -61,15 +61,15 @@ class MyProtocol implements DBProtocol {
 
 class MyObserver implements DBObserver {
   async onAdd(newFeed: FeedBase): Promise<void> {
-    console.log(`onAdd: `, newFeed)
+    console.log(`onAdd: `, newFeed.toString())
   }
 
   async onDelete(oldFeed: FeedBase): Promise<void> {
-    console.log(`onDelete: `, oldFeed)
+    console.log(`onDelete: `, oldFeed.toString())
   }
 
   async onUpdate(newFeed: FeedBase, changedMap: any): Promise<void> {
-    console.log(`onUpdate: `, newFeed, changedMap)
+    console.log(`onUpdate: `, newFeed.toString(), changedMap)
   }
 }
 

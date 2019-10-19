@@ -226,4 +226,8 @@ export class FeedBase extends FCModel {
     }
     return retData
   }
+
+  public toString() {
+    return `${this.constructor.name}: ${JSON.stringify(this.fc_pureModel(), null, 2)}`
+  }
 }
