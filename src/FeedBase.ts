@@ -17,12 +17,30 @@ export interface DBObserver {
  * @description When FeedBase's DBProtocol exists, the sql functions would take effect
  */
 export class FeedBase extends FCModel {
-  protected _dbProtocol: DBProtocol | null = null
-  protected _dataBackup: {[p: string]: any}|null = null
-  public dbObserver: DBObserver | null = null
+  protected _dbProtocol?: DBProtocol
+  protected _dataBackup: {[p: string]: any} | null = null
+  protected _reloadOnAdded = false
+  protected _reloadOnUpdated = false
+  public dbObserver?: DBObserver
 
   constructor() {
     super()
+  }
+
+  private updateAutoIncrementInfo(lastInsertId: number) {
+    if (lastInsertId > 0 && this._dbProtocol && typeof this._dbProtocol.primaryKey() === 'string') {
+      const primaryKey = this._dbProtocol.primaryKey()
+      const mapper = this.fc_propertyMapper()
+      for (const propertyKey in mapper) {
+        if (mapper[propertyKey] === primaryKey) {
+          const _this = this as any
+          if (_this[propertyKey] === null || _this[propertyKey] === undefined) {
+            _this[propertyKey] = lastInsertId
+          }
+          break
+        }
+      }
+    }
   }
 
   /**
@@ -57,7 +75,12 @@ export class FeedBase extends FCModel {
     const data = this.fc_encode()
     if (this._dbProtocol) {
       const tools = new DBTools(this._dbProtocol)
-      await tools.add(data)
+      const lastInsertId = await tools.add(data)
+      this.updateAutoIncrementInfo(lastInsertId)
+
+      if (this._reloadOnAdded) {
+        await this.reloadDataFromDB()
+      }
 
       if (this.dbObserver) {
         await this.dbObserver.onAdd(this)
@@ -136,6 +159,10 @@ export class FeedBase extends FCModel {
       const tools = new DBTools(this._dbProtocol)
       await tools.update(params)
 
+      if (this._reloadOnUpdated) {
+        await this.reloadDataFromDB()
+      }
+
       if (this.dbObserver) {
         await this.dbObserver.onUpdate(this, editedMap, this._dataBackup)
       }
@@ -166,5 +193,37 @@ export class FeedBase extends FCModel {
   // eslint-disable-next-line no-unused-vars,@typescript-eslint/no-unused-vars
   fc_searcher(params: {[p: string]: any} = {}): FeedSearcher {
     return new FeedSearcher(this)
+  }
+
+  /**
+   * @description Reload data from database
+   */
+  public async reloadDataFromDB() {
+    if (this._dbProtocol) {
+      const data = this.fc_encode()
+      const params: any = {}
+      const pKey = this._dbProtocol.primaryKey()
+      const pKeys = Array.isArray(pKey) ? pKey : [pKey]
+      pKeys.forEach((key: string): void => {
+        params[key] = data[key]
+      })
+
+      const feed = await this.fc_searcher().findWithParams(params)
+      if (feed) {
+        this.fc_generate(feed.fc_encode())
+      }
+    }
+    return this
+  }
+
+  public cleanFilterParams(params: { [p: string]: any }) {
+    const retData = Object.assign({}, params)
+    const mapper = this.fc_propertyMapper()
+    for (const key in params) {
+      if (!(key in mapper)) {
+        delete retData[key]
+      }
+    }
+    return retData
   }
 }

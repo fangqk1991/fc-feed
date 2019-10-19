@@ -11,6 +11,10 @@ database.init({
   password: '',
   timezone: '+08:00',
   // logging: false,
+  // dialectOptions: {
+  //   dateStrings: true,
+  //   typeCast: true,
+  // }
 })
 
 class MyProtocol implements DBProtocol {
@@ -31,11 +35,20 @@ class MyProtocol implements DBProtocol {
       'uid',
       'key1',
       'key2',
+      'some_date',
+      'some_datetime',
+      'create_time',
+      'update_time',
     ]
   }
 
   insertableCols(): string[] {
-    return this.cols()
+    return [
+      'key1',
+      'key2',
+      'some_date',
+      'some_datetime',
+    ]
   }
 
   modifiableCols(): string[] {
@@ -64,11 +77,15 @@ export default class DemoTable extends FeedBase {
   uid: any = null
   key1: any = null
   key2: any = null
+  createTime: any = null
+  updateTime: any = null
 
   constructor() {
     super()
     this._dbProtocol = new MyProtocol()
     this.dbObserver = new MyObserver()
+    this._reloadOnAdded = true
+    this._reloadOnUpdated = true
   }
 
   fc_propertyMapper(): { [p: string]: string } {
@@ -76,6 +93,8 @@ export default class DemoTable extends FeedBase {
       uid: 'uid',
       key1: 'key1',
       key2: 'key2',
+      createTime: 'create_time',
+      updateTime: 'update_time',
     }
   }
 }

@@ -12,13 +12,17 @@ describe('Test DemoTable', (): void => {
       feed.key1 = `K1 - ${Math.random()}`
       feed.key2 = `K2 - ${Math.random()}`
       await feed.fc_add()
+      const newFeed = (await new DemoTable().fc_searcher().findWithUID(feed.uid)) as DemoTable
+      assert.equal(feed.uid, newFeed.uid)
+      assert.equal(feed.key1, newFeed.key1)
+      assert.equal(feed.key2, newFeed.key2)
     }
 
     const countAfter = await searcher.queryCount()
     assert.ok(countBefore + count === countAfter)
 
     {
-      const items = await searcher.queryAll()
+      const items = await searcher.queryAllFeeds()
       const watchUID = (items[0] as any)['uid'] as string
       const feed = await new DemoTable().fc_searcher().findWithParams({
         uid: watchUID
