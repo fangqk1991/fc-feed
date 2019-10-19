@@ -200,15 +200,7 @@ export class FeedBase extends FCModel {
    */
   public async reloadDataFromDB() {
     if (this._dbProtocol) {
-      const data = this.fc_encode()
-      const params: any = {}
-      const pKey = this._dbProtocol.primaryKey()
-      const pKeys = Array.isArray(pKey) ? pKey : [pKey]
-      pKeys.forEach((key: string): void => {
-        params[key] = data[key]
-      })
-
-      const feed = await this.fc_searcher().findWithParams(params)
+      const feed = await this.findFeedInDB()
       if (feed) {
         this.fc_generate(feed.fc_encode())
       }
@@ -225,6 +217,24 @@ export class FeedBase extends FCModel {
       }
     }
     return retData
+  }
+
+  public async checkExistsInDB() {
+    return (await this.findFeedInDB()) !== null
+  }
+
+  public async findFeedInDB() {
+    if (this._dbProtocol) {
+      const data = this.fc_encode()
+      const params: any = {}
+      const pKey = this._dbProtocol.primaryKey()
+      const pKeys = Array.isArray(pKey) ? pKey : [pKey]
+      pKeys.forEach((key: string): void => {
+        params[key] = data[key]
+      })
+      return (await this.fc_searcher().findWithParams(params)) as FeedBase | null
+    }
+    return null
   }
 
   public toString() {
