@@ -13,7 +13,7 @@ export interface DBObserver {
   onDelete(oldFeed: FeedBase): Promise<void>;
 }
 
-interface SearchOptions {
+export interface FilterOptions {
   _sortKey?: string;
   _sortDirection?: string;
   _offset?: number;
@@ -226,7 +226,7 @@ export class FeedBase extends FCModel {
    * @description Return a FeedSearcher for current model class.
    * @param params
    */
-  fc_searcher(params: SearchOptions = {}): FeedSearcher {
+  fc_searcher(params: FilterOptions = {}): FeedSearcher {
     const searcher = new FeedSearcher(this)
     const mapper = this.fc_propertyMapper()
     const { sortKey, sortDirection } = _buildSortRule(params)
