@@ -13,6 +13,42 @@ export interface DBObserver {
   onDelete(oldFeed: FeedBase): Promise<void>;
 }
 
+interface SearchOptions {
+  _sortKey?: string;
+  _sortDirection?: string;
+  _offset?: number;
+  _length?: number;
+  [p: string]: any;
+}
+
+const _buildSortRule = (params: any) => {
+  let sortDirection = params._sortDirection || 'ASC'
+  if (!['ASC', 'DESC'].includes(sortDirection)) {
+    if (sortDirection === 'ascending') {
+      sortDirection = 'ASC'
+    } else if (sortDirection === 'descending') {
+      sortDirection = 'DESC'
+    } else {
+      sortDirection = 'ASC'
+    }
+  }
+
+  return {
+    sortKey: params._sortKey || '',
+    sortDirection: sortDirection,
+  }
+}
+
+const _buildLimitInfo = (params: any) => {
+  let { _offset = -1, _length = -1 } = params
+  _offset = Number(_offset)
+  _length = Number(_length)
+  return {
+    offset: _offset,
+    length: _length,
+  }
+}
+
 /**
  * @description When FeedBase's DBProtocol exists, the sql functions would take effect
  */
@@ -190,9 +226,24 @@ export class FeedBase extends FCModel {
    * @description Return a FeedSearcher for current model class.
    * @param params
    */
-  // eslint-disable-next-line no-unused-vars,@typescript-eslint/no-unused-vars
-  fc_searcher(params: {[p: string]: any} = {}): FeedSearcher {
-    return new FeedSearcher(this)
+  fc_searcher(params: SearchOptions = {}): FeedSearcher {
+    const searcher = new FeedSearcher(this)
+    const mapper = this.fc_propertyMapper()
+    const { sortKey, sortDirection } = _buildSortRule(params)
+    if (sortKey && mapper[sortKey]) {
+      searcher.processor().addOrderRule(mapper[sortKey], sortDirection)
+    }
+    const filterKeys = Object.keys(params).filter((key: string) => {
+      return /^[a-zA-Z]\w+$/.test(key) && key in mapper
+    })
+    filterKeys.forEach((key) => {
+      searcher.processor().addConditionKV(mapper[key], params[key])
+    })
+    const limitInfo = _buildLimitInfo(params)
+    if (limitInfo.offset >= 0 && limitInfo.length > 0) {
+      searcher.processor().setLimitInfo(limitInfo.offset, limitInfo.length)
+    }
+    return searcher
   }
 
   /**

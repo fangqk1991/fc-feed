@@ -2,7 +2,7 @@ import * as assert from 'assert'
 import DemoTable from './DemoTable'
 
 describe('Test DemoTable', (): void => {
-  it(`Test Normal Feed`, async (): Promise<void> => {
+  it(`Test Normal Feed`, async () => {
     const searcher = new DemoTable().fc_searcher()
     const countBefore = await searcher.queryCount()
 
@@ -71,6 +71,30 @@ describe('Test DemoTable', (): void => {
         uid: watchUID
       }) as DemoTable
       assert.ok(feed3 === null)
+    }
+  })
+
+  it(`Test fc_searcher`, async () => {
+    const searcher = new DemoTable().fc_searcher()
+    const allCount = await searcher.queryCount()
+
+    {
+      const length = Math.floor(allCount / 2)
+      const searcher = new DemoTable().fc_searcher({
+        _sortKey: 'uid',
+        _sortDirection: 'DESC',
+        _offset: 0,
+        _length: length,
+      })
+      const feedsCount = await searcher.queryCount()
+      assert.equal(feedsCount, allCount)
+
+      const feeds = (await searcher.queryFeeds()) as DemoTable[]
+      let prevUID = Number.MAX_VALUE
+      for (const feed of feeds) {
+        assert.ok(prevUID > feed.uid)
+        prevUID = feed.uid
+      }
     }
   })
 })

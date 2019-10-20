@@ -112,6 +112,14 @@ export class FeedSearcher {
   }
 
   /**
+   * @description Return model list
+   */
+  async queryFeeds(): Promise<FeedBase[]> {
+    const items = await this._searcher.queryList()
+    return this.formatList(items, true) as FeedBase[]
+  }
+
+  /**
    * @description Like findWithParams, but it will throw an error if object does not exist.
    * @param params
    * @param checkPrimaryKey
