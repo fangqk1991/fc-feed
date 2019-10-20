@@ -234,7 +234,7 @@ export class FeedBase extends FCModel {
       searcher.processor().addOrderRule(mapper[sortKey], sortDirection)
     }
     const filterKeys = Object.keys(params).filter((key: string) => {
-      return /^[a-zA-Z]\w+$/.test(key) && key in mapper
+      return /^[a-zA-Z]\w+$/.test(key) && key in mapper && !!params[key]
     })
     filterKeys.forEach((key) => {
       searcher.processor().addConditionKV(mapper[key], params[key])
