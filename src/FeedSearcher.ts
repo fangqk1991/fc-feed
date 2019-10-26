@@ -73,12 +73,12 @@ export class FeedSearcher<T extends FeedBase> {
   /**
    * @description Return a model instance.
    */
-  async queryOne(): Promise<null | T> {
+  async queryOne(): Promise<undefined | T> {
     const items = await this.queryListWithLimitInfo(0, 1)
     if (items.length > 0) {
       return items[0]
     }
-    return null
+    return undefined
   }
 
   /**

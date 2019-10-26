@@ -44,7 +44,7 @@ describe('Test DemoTable', (): void => {
       const feed3 = await DemoTable.findOne({
         uid: watchUID
       })
-      assert.equal(feed3, null)
+      assert.ok(feed3 === undefined)
     }
 
     {
