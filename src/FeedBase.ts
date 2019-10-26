@@ -68,7 +68,7 @@ export class FeedBase extends FCModel {
   }
 
   private updateAutoIncrementInfo(lastInsertId: number) {
-    console.log(`lastInsertId: ${lastInsertId}`)
+    // console.log(`lastInsertId: ${lastInsertId}`)
     assert.ok(!!this._dbProtocol, '_dbProtocol must be not empty')
 
     if (lastInsertId > 0 && typeof this._dbProtocol.primaryKey() === 'string') {
