@@ -1,17 +1,15 @@
-import DemoTable from './DemoTable'
+import _DemoTable from './DemoTable'
 
-class DemoTable_Ext extends DemoTable {
+export default class DemoTable extends _DemoTable {
   static async createFeed(key1: string, key2: string): Promise<void> {
     const feed = new DemoTable()
     feed.key1 = key1
     feed.key2 = key2
-    await feed.fc_add()
+    await feed.addToDB()
   }
 
-  static async count(): Promise<number> {
+  static async allFeeds() {
     const searcher = new DemoTable().fc_searcher()
-    return searcher.queryCount()
+    return (await searcher.queryAllFeeds()) as DemoTable[]
   }
 }
-
-export default DemoTable_Ext

@@ -120,24 +120,23 @@ export class FeedSearcher {
   }
 
   /**
+   * @deprecated Use FeedBase.prepareOne instead.
    * @description Like findWithParams, but it will throw an error if object does not exist.
-   * @param params
-   * @param checkPrimaryKey
    */
-  async prepareWithParams(params: {}, checkPrimaryKey: boolean = true): Promise<FeedBase | null> {
-    const obj = await this.findWithParams(params, checkPrimaryKey)
+  async prepareWithParams(params: {}): Promise<FeedBase | null> {
+    const obj = await this.findWithParams(params)
     assert.ok(!!obj, `${this.constructor.name}: object not found.`)
     return obj
   }
 
   /**
+   * @deprecated Use FeedBase.findOne instead.
    * @description Find model with { key => value } conditions, and return first object. "checkPrimaryKey = true" means it will check the primaryKeys defined in protocol.
    * @param params
-   * @param checkPrimaryKey {boolean}
    */
-  async findWithParams(params: {}, checkPrimaryKey = true): Promise<null | FeedBase> {
+  async findWithParams(params: {}): Promise<null | FeedBase> {
     const tools = new DBTools(this._protocol)
-    const data = await tools.searchSingle(params, checkPrimaryKey)
+    const data = await tools.makeSearcher(params).querySingle()
     if (data) {
       const obj = new this._model()
       obj.fc_generate(data)
@@ -147,6 +146,7 @@ export class FeedSearcher {
   }
 
   /**
+   * @deprecated Use FeedBase.prepareWithUID instead.
    * @description Like findWithUID, but it will throw an error if object does not exist.
    * @param uid {string | number}
    */
@@ -157,6 +157,7 @@ export class FeedSearcher {
   }
 
   /**
+   * @deprecated Use FeedBase.findWithUID instead.
    * @description Find Model which single-primary-key
    * @param uid {string | number}
    */
@@ -180,6 +181,6 @@ export class FeedSearcher {
       params = params1
     }
     const tools = new DBTools(this._protocol)
-    return (await tools.fetchCount(params)) > 0
+    return (await tools.makeSearcher(params).queryCount()) > 0
   }
 }
