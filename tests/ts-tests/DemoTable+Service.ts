@@ -10,6 +10,6 @@ export default class DemoTable extends _DemoTable {
 
   static async allFeeds() {
     const searcher = new DemoTable().fc_searcher()
-    return (await searcher.queryAllFeeds()) as DemoTable[]
+    return searcher.queryAllFeeds()
   }
 }

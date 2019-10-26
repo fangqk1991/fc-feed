@@ -2,12 +2,12 @@ import { DBProtocol, DBTools, SQLSearcher } from 'fc-sql'
 import { FeedBase } from './FeedBase'
 import * as assert from 'assert'
 
-export class FeedSearcher {
+export class FeedSearcher<T extends FeedBase> {
   private readonly _searcher: SQLSearcher
   private readonly _protocol: DBProtocol
-  private readonly _model: { new(): FeedBase }
+  private readonly _model: { new(): T }
 
-  constructor(modelInstance: FeedBase) {
+  constructor(modelInstance: T) {
     const protocol = modelInstance.dbProtocol()
     assert.ok(!!protocol, `${modelInstance.constructor.name} must have DBProtocol`)
     const searcher = protocol.database().searcher()
@@ -15,7 +15,7 @@ export class FeedSearcher {
     searcher.setColumns(protocol.cols())
     this._searcher = searcher
     this._protocol = protocol
-    this._model = modelInstance.constructor as { new(): FeedBase }
+    this._model = modelInstance.constructor as { new(): T }
   }
 
   processor(): SQLSearcher {
@@ -27,7 +27,7 @@ export class FeedSearcher {
    * @description Query single object, return an model instance when retFeed = true
    * @param retFeed
    */
-  async querySingle(retFeed = true): Promise<null | FeedBase | {[p: string]: any}> {
+  async querySingle(retFeed = true): Promise<null | T | {[p: string]: any}> {
     const items = await this.queryList(0, 1, retFeed)
     if (items.length > 0) {
       return items[0]
@@ -39,7 +39,7 @@ export class FeedSearcher {
    * @deprecated Return model instance is recommended, please use queryAllFeeds instead.
    * @param retFeed {boolean}
    */
-  async queryAll(retFeed: boolean = false): Promise<({[p: string]: any} | FeedBase)[]> {
+  async queryAll(retFeed: boolean = false): Promise<({[p: string]: any} | T)[]> {
     return this.queryList(-1, 0, retFeed)
   }
 
@@ -49,14 +49,14 @@ export class FeedSearcher {
    * @param length {number}
    * @param retFeed {boolean}
    */
-  async queryList(page: number, length: number, retFeed: boolean = false): Promise<({[p: string]: any} | FeedBase)[]> {
+  async queryList(page: number, length: number, retFeed: boolean = false): Promise<({[p: string]: any} | T)[]> {
     this._searcher.setPageInfo(page, length)
     const items = await this._searcher.queryList()
     return this.formatList(items, retFeed)
   }
 
-  formatList(items: {}[], retFeed = false): ({[p: string]: any} | FeedBase)[] {
-    return items.map((dic: {}): {[p: string]: any} | FeedBase => {
+  formatList(items: {}[], retFeed = false): ({[p: string]: any} | T)[] {
+    return items.map((dic: {}): {[p: string]: any} | T => {
       const obj = new this._model()
       obj.fc_generate(dic)
       return retFeed ? obj : obj.fc_encode()
@@ -73,7 +73,7 @@ export class FeedSearcher {
   /**
    * @description Return a model instance.
    */
-  async queryOne(): Promise<null | FeedBase> {
+  async queryOne(): Promise<null | T> {
     const items = await this.queryListWithLimitInfo(0, 1)
     if (items.length > 0) {
       return items[0]
@@ -86,10 +86,10 @@ export class FeedSearcher {
    * @param page {number}
    * @param lengthPerPage {number}
    */
-  async queryListWithPageInfo(page: number, lengthPerPage: number): Promise<FeedBase[]> {
+  async queryListWithPageInfo(page: number, lengthPerPage: number): Promise<T[]> {
     this._searcher.setPageInfo(page, lengthPerPage)
     const items = await this._searcher.queryList()
-    return this.formatList(items, true) as FeedBase[]
+    return this.formatList(items, true) as T[]
   }
 
   /**
@@ -97,33 +97,33 @@ export class FeedSearcher {
    * @param offset {number}
    * @param length {number}
    */
-  async queryListWithLimitInfo(offset: number, length: number): Promise<FeedBase[]> {
+  async queryListWithLimitInfo(offset: number, length: number): Promise<T[]> {
     this._searcher.setLimitInfo(offset, length)
     const items = await this._searcher.queryList()
-    return this.formatList(items, true) as FeedBase[]
+    return this.formatList(items, true) as T[]
   }
 
   /**
    * @description Return model list
    */
-  async queryAllFeeds(): Promise<FeedBase[]> {
+  async queryAllFeeds(): Promise<T[]> {
     const items = await this._searcher.queryList()
-    return this.formatList(items, true) as FeedBase[]
+    return this.formatList(items, true) as T[]
   }
 
   /**
    * @description Return model list
    */
-  async queryFeeds(): Promise<FeedBase[]> {
+  async queryFeeds(): Promise<T[]> {
     const items = await this._searcher.queryList()
-    return this.formatList(items, true) as FeedBase[]
+    return this.formatList(items, true) as T[]
   }
 
   /**
    * @deprecated Use FeedBase.prepareOne instead.
    * @description Like findWithParams, but it will throw an error if object does not exist.
    */
-  async prepareWithParams(params: {}): Promise<FeedBase | null> {
+  async prepareWithParams(params: {}): Promise<T | null> {
     const obj = await this.findWithParams(params)
     assert.ok(!!obj, `${this.constructor.name}: object not found.`)
     return obj
@@ -134,7 +134,7 @@ export class FeedSearcher {
    * @description Find model with { key => value } conditions, and return first object. "checkPrimaryKey = true" means it will check the primaryKeys defined in protocol.
    * @param params
    */
-  async findWithParams(params: {}): Promise<null | FeedBase> {
+  async findWithParams(params: {}): Promise<null | T> {
     const tools = new DBTools(this._protocol)
     const data = await tools.makeSearcher(params).querySingle()
     if (data) {
@@ -150,7 +150,7 @@ export class FeedSearcher {
    * @description Like findWithUID, but it will throw an error if object does not exist.
    * @param uid {string | number}
    */
-  async prepareWithUID(uid: string | number): Promise<FeedBase | null | undefined> {
+  async prepareWithUID(uid: string | number): Promise<T | null | undefined> {
     const obj = await this.findWithUID(uid)
     assert.ok(!!obj, `${this.constructor.name}: object not found.`)
     return obj
@@ -161,7 +161,7 @@ export class FeedSearcher {
    * @description Find Model which single-primary-key
    * @param uid {string | number}
    */
-  async findWithUID(uid: string | number): Promise<FeedBase | null | undefined> {
+  async findWithUID(uid: string | number): Promise<T | null | undefined> {
     const pKey = this._protocol.primaryKey()
     if (typeof pKey === 'string') {
       const params: {[p: string]: any} = {}

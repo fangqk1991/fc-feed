@@ -89,7 +89,7 @@ describe('Test DemoTable', (): void => {
       const feedsCount = await searcher.queryCount()
       assert.equal(feedsCount, allCount)
 
-      const feeds = (await searcher.queryFeeds()) as DemoTable[]
+      const feeds = await searcher.queryFeeds()
       let prevUID = Number.MAX_VALUE
       for (const feed of feeds) {
         assert.ok(prevUID > feed.uid)

@@ -242,7 +242,7 @@ export class FeedBase extends FCModel {
    * @description Return a FeedSearcher for current model class.
    * @param params
    */
-  fc_searcher(params: FilterOptions = {}): FeedSearcher {
+  fc_searcher(params: FilterOptions = {}) {
     const searcher = new FeedSearcher(this)
     const mapper = this.fc_propertyMapper()
     const { sortKey, sortDirection } = _buildSortRule(params)
