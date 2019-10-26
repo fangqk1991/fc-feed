@@ -314,7 +314,7 @@ export class FeedBase extends FCModel {
   /**
    * @description Like findWithUid, but it will throw an error if object does not exist.
    */
-  public static async prepareWithUID<T extends FeedBase>(this: { new(): T }, uid: string | number, transaction?: Transaction): Promise<T> {
+  public static async prepareWithUid<T extends FeedBase>(this: { new(): T }, uid: string | number, transaction?: Transaction): Promise<T> {
     const obj = await (this as any).findWithUid(uid, transaction)
     assert.ok(!!obj, `${this.constructor.name}: object not found.`)
     return obj

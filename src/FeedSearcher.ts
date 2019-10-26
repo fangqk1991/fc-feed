@@ -146,11 +146,11 @@ export class FeedSearcher<T extends FeedBase> {
   }
 
   /**
-   * @deprecated Use FeedBase.prepareWithUID instead.
+   * @deprecated Use FeedBase.prepareWithUid instead.
    * @description Like findWithUID, but it will throw an error if object does not exist.
    * @param uid {string | number}
    */
-  async prepareWithUID(uid: string | number): Promise<T> {
+  async prepareWithUid(uid: string | number): Promise<T> {
     const obj = await this.findWithUID(uid)
     assert.ok(!!obj, `${this.constructor.name}: object not found.`)
     return obj as T

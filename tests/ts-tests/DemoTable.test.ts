@@ -12,7 +12,7 @@ describe('Test DemoTable', (): void => {
       feed.key1 = `K1 - ${Math.random()}`
       feed.key2 = `K2 - ${Math.random()}`
       await feed.addToDB()
-      const newFeed = await DemoTable.prepareWithUID(feed.uid)
+      const newFeed = await DemoTable.prepareWithUid(feed.uid)
       assert.equal(feed.uid, newFeed.uid)
       assert.equal(feed.key1, newFeed.key1)
       assert.equal(feed.key2, newFeed.key2)

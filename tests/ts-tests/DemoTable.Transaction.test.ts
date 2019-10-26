@@ -98,13 +98,13 @@ describe('Test DemoTable.Transaction', (): void => {
       const transactionRunner = database.createTransactionRunner()
       await transactionRunner.commit(async (transaction) => {
         {
-          const feed = (await DemoTable.prepareWithUID(modifyUid, transaction)) as DemoTable
+          const feed = (await DemoTable.prepareWithUid(modifyUid, transaction)) as DemoTable
           feed.fc_edit()
           feed.key1 = modifyContent
           await feed.updateToDB(transaction)
         }
         {
-          const feed = (await DemoTable.prepareWithUID(deleteUid, transaction)) as DemoTable
+          const feed = (await DemoTable.prepareWithUid(deleteUid, transaction)) as DemoTable
           await feed.deleteFromDB(transaction)
         }
       })
