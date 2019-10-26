@@ -299,7 +299,7 @@ export class FeedBase extends FCModel {
       params[key] = data[key]
     })
     const clazz = this.constructor as any
-    return (await clazz.findOne(params, transaction)) as FeedBase | null
+    return (await clazz.findOne(params, transaction)) as FeedBase | undefined
   }
 
   public toString() {
@@ -320,7 +320,7 @@ export class FeedBase extends FCModel {
     return obj
   }
 
-  public static async findWithUid<T extends FeedBase>(this: { new(): T }, uid: string | number, transaction?: Transaction): Promise<T> {
+  public static async findWithUid<T extends FeedBase>(this: { new(): T }, uid: string | number, transaction?: Transaction): Promise<T | undefined> {
     const feed = new this() as FeedBase
     const pKey = feed._dbProtocol.primaryKey()
     assert.ok(typeof pKey === 'string', 'PrimaryKey must be single item in this case.')
@@ -338,7 +338,7 @@ export class FeedBase extends FCModel {
     return obj
   }
 
-  public static async findOne<T extends FeedBase>(this: { new(): T }, params: Params, transaction?: Transaction): Promise<T | null> {
+  public static async findOne<T extends FeedBase>(this: { new(): T }, params: Params, transaction?: Transaction): Promise<T | undefined> {
     assert.ok(typeof params === 'object', `params must be an object.`)
     const feed = new this() as T
     const tools = new DBTools(feed._dbProtocol, transaction)
@@ -348,7 +348,7 @@ export class FeedBase extends FCModel {
       feed.fc_generate(data)
       return feed
     }
-    return null
+    return undefined
   }
 
   public static async count(params: Params = {}, transaction?: Transaction) {

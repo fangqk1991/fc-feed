@@ -27,12 +27,12 @@ export class FeedSearcher<T extends FeedBase> {
    * @description Query single object, return an model instance when retFeed = true
    * @param retFeed
    */
-  async querySingle(retFeed = true): Promise<null | T | {[p: string]: any}> {
+  async querySingle(retFeed = true): Promise<undefined | T | {[p: string]: any}> {
     const items = await this.queryList(0, 1, retFeed)
     if (items.length > 0) {
       return items[0]
     }
-    return null
+    return undefined
   }
 
   /**
@@ -123,10 +123,10 @@ export class FeedSearcher<T extends FeedBase> {
    * @deprecated Use FeedBase.prepareOne instead.
    * @description Like findWithParams, but it will throw an error if object does not exist.
    */
-  async prepareWithParams(params: {}): Promise<T | null> {
+  async prepareWithParams(params: {}): Promise<T> {
     const obj = await this.findWithParams(params)
     assert.ok(!!obj, `${this.constructor.name}: object not found.`)
-    return obj
+    return obj as T
   }
 
   /**
@@ -134,7 +134,7 @@ export class FeedSearcher<T extends FeedBase> {
    * @description Find model with { key => value } conditions, and return first object. "checkPrimaryKey = true" means it will check the primaryKeys defined in protocol.
    * @param params
    */
-  async findWithParams(params: {}): Promise<null | T> {
+  async findWithParams(params: {}): Promise<T | undefined> {
     const tools = new DBTools(this._protocol)
     const data = await tools.makeSearcher(params).querySingle()
     if (data) {
@@ -142,7 +142,7 @@ export class FeedSearcher<T extends FeedBase> {
       obj.fc_generate(data)
       return obj
     }
-    return null
+    return undefined
   }
 
   /**
@@ -150,10 +150,10 @@ export class FeedSearcher<T extends FeedBase> {
    * @description Like findWithUID, but it will throw an error if object does not exist.
    * @param uid {string | number}
    */
-  async prepareWithUID(uid: string | number): Promise<T | null | undefined> {
+  async prepareWithUID(uid: string | number): Promise<T> {
     const obj = await this.findWithUID(uid)
     assert.ok(!!obj, `${this.constructor.name}: object not found.`)
-    return obj
+    return obj as T
   }
 
   /**
@@ -161,7 +161,7 @@ export class FeedSearcher<T extends FeedBase> {
    * @description Find Model which single-primary-key
    * @param uid {string | number}
    */
-  async findWithUID(uid: string | number): Promise<T | null | undefined> {
+  async findWithUID(uid: string | number): Promise<T | undefined> {
     const pKey = this._protocol.primaryKey()
     if (typeof pKey === 'string') {
       const params: {[p: string]: any} = {}

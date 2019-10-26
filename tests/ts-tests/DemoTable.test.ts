@@ -70,7 +70,7 @@ describe('Test DemoTable', (): void => {
       const feed3 = await DemoTable.findOne({
         uid: watchUID
       }) as DemoTable
-      assert.ok(feed3 === null)
+      assert.ok(!feed3)
     }
   })
 
