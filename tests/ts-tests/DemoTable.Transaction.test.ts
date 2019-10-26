@@ -118,7 +118,7 @@ describe('Test DemoTable.Transaction', (): void => {
       }
 
       {
-        const feed = (await DemoTable.findWithUid(deleteUid)) as DemoTable
+        const feed = await DemoTable.findWithUid(deleteUid)
         assert.equal(feed, null)
       }
     }

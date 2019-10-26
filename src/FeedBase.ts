@@ -314,32 +314,33 @@ export class FeedBase extends FCModel {
   /**
    * @description Like findWithUid, but it will throw an error if object does not exist.
    */
-  public static async prepareWithUID(uid: string | number, transaction?: Transaction) {
-    const obj = await this.findWithUid(uid, transaction)
+  public static async prepareWithUID<T extends FeedBase>(this: { new(): T }, uid: string | number, transaction?: Transaction): Promise<T> {
+    const obj = await (this as any).findWithUid(uid, transaction)
     assert.ok(!!obj, `${this.constructor.name}: object not found.`)
     return obj
   }
 
-  public static async findWithUid(uid: string | number, transaction?: Transaction) {
+  public static async findWithUid<T extends FeedBase>(this: { new(): T }, uid: string | number, transaction?: Transaction): Promise<T> {
     const feed = new this() as FeedBase
     const pKey = feed._dbProtocol.primaryKey()
     assert.ok(typeof pKey === 'string', 'PrimaryKey must be single item in this case.')
     const params: {[p: string]: any} = {}
     params[pKey as string] = uid
-    return this.findOne(params, transaction)
+    return (this as any).findOne(params, transaction)
   }
 
   /**
    * @description Like findOne, but it will throw an error if object does not exist.
    */
-  public static async prepareOne(params: Params, transaction?: Transaction) {
-    const obj = await this.findOne(params, transaction)
+  public static async prepareOne<T extends FeedBase>(this: { new(): T }, params: Params, transaction?: Transaction): Promise<T> {
+    const obj = await (this as any).findOne(params, transaction)
     assert.ok(!!obj, `${this.constructor.name}: object not found.`)
     return obj
   }
 
-  public static async findOne(params: Params, transaction?: Transaction) {
-    const feed = new this() as FeedBase
+  public static async findOne<T extends FeedBase>(this: { new(): T }, params: Params, transaction?: Transaction): Promise<T | null> {
+    assert.ok(typeof params === 'object', `params must be an object.`)
+    const feed = new this() as T
     const tools = new DBTools(feed._dbProtocol, transaction)
     const searcher = tools.makeSearcher(params)
     const data = await searcher.querySingle()

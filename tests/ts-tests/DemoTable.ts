@@ -97,4 +97,6 @@ export default class DemoTable extends FeedBase {
       updateTime: 'update_time',
     }
   }
+
+  customFunc() {}
 }

@@ -11,8 +11,8 @@ describe('Test DemoTable', (): void => {
       const feed = new DemoTable()
       feed.key1 = `K1 - ${Math.random()}`
       feed.key2 = `K2 - ${Math.random()}`
-      await feed.fc_add()
-      const newFeed = (await new DemoTable().fc_searcher().findWithUID(feed.uid)) as DemoTable
+      await feed.addToDB()
+      const newFeed = await DemoTable.prepareWithUID(feed.uid)
       assert.equal(feed.uid, newFeed.uid)
       assert.equal(feed.key1, newFeed.key1)
       assert.equal(feed.key2, newFeed.key2)
@@ -24,40 +24,40 @@ describe('Test DemoTable', (): void => {
     {
       const items = await searcher.queryAllFeeds()
       const watchUID = (items[0] as any)['uid'] as string
-      const feed = await new DemoTable().fc_searcher().findWithParams({
+      const feed = await DemoTable.prepareOne({
         uid: watchUID
-      }) as DemoTable
+      })
       feed.fc_edit()
       feed.key1 = 'K1 - New'
-      await feed.fc_update()
+      await feed.updateToDB()
 
-      const feed2 = await new DemoTable().fc_searcher().findWithParams({
+      const feed2 = await DemoTable.prepareOne({
         uid: watchUID
-      }) as DemoTable
+      })
 
       assert.ok(feed.uid === feed2.uid)
       assert.ok(feed.key2 === feed2.key2)
       assert.ok(feed2.key1 === 'K1 - New')
 
-      await feed.fc_delete()
+      await feed.deleteFromDB()
 
-      const feed3 = await new DemoTable().fc_searcher().findWithParams({
+      const feed3 = await DemoTable.findOne({
         uid: watchUID
-      }) as DemoTable
-      assert.ok(feed3 === null)
+      })
+      assert.equal(feed3, null)
     }
 
     {
       const items = (await searcher.queryAllFeeds()) as DemoTable[]
       const watchUID = items[0].uid
-      const feed = await new DemoTable().fc_searcher().findWithParams({
+      const feed = await DemoTable.findOne({
         uid: watchUID
       }) as DemoTable
       feed.fc_edit()
       feed.key1 = 'K1 - New'
       await feed.fc_update()
 
-      const feed2 = await new DemoTable().fc_searcher().findWithParams({
+      const feed2 = await DemoTable.findOne({
         uid: watchUID
       }) as DemoTable
 
@@ -67,7 +67,7 @@ describe('Test DemoTable', (): void => {
 
       await feed.fc_delete()
 
-      const feed3 = await new DemoTable().fc_searcher().findWithParams({
+      const feed3 = await DemoTable.findOne({
         uid: watchUID
       }) as DemoTable
       assert.ok(feed3 === null)
