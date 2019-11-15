@@ -1,6 +1,6 @@
 {
   "name": "fc-feed",
-  "version": "0.9.9",
+  "version": "0.9.10",
   "description": "A feed-model use fc-model & fc-sql",
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
@@ -35,7 +35,7 @@
   },
   "dependencies": {
     "fc-model": "^0.4.0",
-    "fc-sql": "^0.12.5"
+    "fc-sql": "^0.12.6"
   },
   "files": [
     "lib/*"
