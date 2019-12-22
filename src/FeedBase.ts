@@ -217,7 +217,7 @@ export class FeedBase extends FCModel {
     const performer = tools.makeModifier(params)
     await performer.execute()
     if (this._reloadOnUpdated) {
-      await this.reloadDataFromDB()
+      await this.reloadDataFromDB(transaction)
     }
     if (this.dbObserver) {
       await this.dbObserver.onUpdate(this, editedMap, this._dataBackup)
