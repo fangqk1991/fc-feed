@@ -111,6 +111,11 @@ export class FeedBase extends FCModel {
     this._dbSpec = new DBSpec(this._dbProtocolV2)
   }
 
+  updateDBProtocolV2(extras: Partial<DBProtocolV2>) {
+    this._dbProtocolV2 = Object.assign({}, this._dbProtocolV2, extras)
+    this._dbSpec = new DBSpec(this._dbProtocolV2)
+  }
+
   dbSpec(): DBSpec {
     if (!this._dbSpec) {
       assert.ok(!!this._dbProtocolV2, '_dbProtocolV2 must be not empty')
