@@ -72,10 +72,10 @@ export class FeedBase extends FCModel {
 
   private updateAutoIncrementInfo(lastInsertId: number) {
     const dbSpec = this.dbSpec()
-    if (lastInsertId > 0 && dbSpec.primaryKeys.length === 1) {
+    if (lastInsertId > 0 && dbSpec.primaryKeys().length === 1) {
       const mapper = this.fc_propertyMapper()
       for (const propertyKey in mapper) {
-        if (mapper[propertyKey] === dbSpec.primaryKeys[0]) {
+        if (mapper[propertyKey] === dbSpec.primaryKey) {
           const _this = this as any
           if (_this[propertyKey] === null || _this[propertyKey] === undefined) {
             _this[propertyKey] = lastInsertId
@@ -130,7 +130,10 @@ export class FeedBase extends FCModel {
   fc_uidStr(): string {
     const data = this.fc_encode()
     const dbSpec = this.dbSpec()
-    return dbSpec.primaryKeys.map((key: string): string => `${data[key]}`).join(',')
+    return dbSpec
+      .primaryKeys()
+      .map((key: string): string => `${data[key]}`)
+      .join(',')
   }
 
   /**
@@ -252,7 +255,7 @@ export class FeedBase extends FCModel {
     }
 
     const dbSpec = this.dbSpec()
-    dbSpec.primaryKeys.forEach((key: string): void => {
+    dbSpec.primaryKeys().forEach((key: string): void => {
       params[key] = data[key]
     })
     const tools = new DBTools(dbSpec, transaction)
@@ -331,9 +334,11 @@ export class FeedBase extends FCModel {
   public async findFeedInDB(transaction?: Transaction) {
     const data = this.fc_encode()
     const params: any = {}
-    this.dbSpec().primaryKeys.forEach((key: string): void => {
-      params[key] = data[key]
-    })
+    this.dbSpec()
+      .primaryKeys()
+      .forEach((key: string): void => {
+        params[key] = data[key]
+      })
     const clazz = this.constructor as any
     return (await clazz.findOne(params, transaction)) as FeedBase | undefined
   }
@@ -367,7 +372,7 @@ export class FeedBase extends FCModel {
   ): Promise<T | undefined> {
     const feed = new this() as FeedBase
     const dbSpec = feed.dbSpec()
-    assert.ok(dbSpec.primaryKeys.length === 1, 'PrimaryKey must be single item in this case.')
+    assert.ok(dbSpec.primaryKeys().length === 1, 'PrimaryKey must be single item in this case.')
     const params: { [p: string]: any } = {}
     params[dbSpec.primaryKey] = uid
     return (this as any).findOne(params, transaction)

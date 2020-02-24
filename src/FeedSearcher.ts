@@ -11,7 +11,7 @@ export class FeedSearcher<T extends FeedBase> {
     const dbSpec = modelInstance.dbSpec()
     const searcher = dbSpec.database.searcher()
     searcher.setTable(dbSpec.table)
-    searcher.setColumns(dbSpec.cols)
+    searcher.setColumns(dbSpec.cols())
     this._searcher = searcher
     this._dbSpec = dbSpec
     this._model = modelInstance.constructor as { new (): T }
@@ -161,7 +161,7 @@ export class FeedSearcher<T extends FeedBase> {
    * @param uid {string | number}
    */
   async findWithUID(uid: string | number): Promise<T | undefined> {
-    assert.ok(this._dbSpec.primaryKeys.length === 1, 'PrimaryKey must be single item in this case.')
+    assert.ok(this._dbSpec.primaryKeys().length === 1, 'PrimaryKey must be single item in this case.')
     const params: { [p: string]: any } = {}
     params[this._dbSpec.primaryKey] = uid
     return this.findWithParams(params)
@@ -169,7 +169,7 @@ export class FeedSearcher<T extends FeedBase> {
 
   async checkExists(params: { [p: string]: any } | string | number): Promise<boolean> {
     if (typeof params !== 'object') {
-      assert.ok(this._dbSpec.primaryKeys.length === 1, 'PrimaryKey must be single item in this case.')
+      assert.ok(this._dbSpec.primaryKeys().length === 1, 'PrimaryKey must be single item in this case.')
       const uid = params
       const params1: { [p: string]: any } = {}
       params1[this._dbSpec.primaryKey] = uid
