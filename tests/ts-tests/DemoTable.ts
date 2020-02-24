@@ -82,7 +82,7 @@ export default class DemoTable extends FeedBase {
 
   constructor() {
     super()
-    this._dbProtocol = new MyProtocol()
+    this.setDBProtocol(new MyProtocol())
     this.dbObserver = new MyObserver()
     this._reloadOnAdded = true
     this._reloadOnUpdated = true

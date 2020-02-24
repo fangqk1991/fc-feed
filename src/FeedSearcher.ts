@@ -1,21 +1,20 @@
-import { DBProtocol, DBTools, SQLSearcher } from 'fc-sql'
+import { DBSpec, DBTools, SQLSearcher } from 'fc-sql'
 import { FeedBase } from './FeedBase'
 import * as assert from 'assert'
 
 export class FeedSearcher<T extends FeedBase> {
   private readonly _searcher: SQLSearcher
-  private readonly _protocol: DBProtocol
-  private readonly _model: { new(): T }
+  private readonly _dbSpec: DBSpec
+  private readonly _model: { new (): T }
 
   constructor(modelInstance: T) {
-    const protocol = modelInstance.dbProtocol()
-    assert.ok(!!protocol, `${modelInstance.constructor.name} must have DBProtocol`)
-    const searcher = protocol.database().searcher()
-    searcher.setTable(protocol.table())
-    searcher.setColumns(protocol.cols())
+    const dbSpec = modelInstance.dbSpec()
+    const searcher = dbSpec.database.searcher()
+    searcher.setTable(dbSpec.table)
+    searcher.setColumns(dbSpec.cols)
     this._searcher = searcher
-    this._protocol = protocol
-    this._model = modelInstance.constructor as { new(): T }
+    this._dbSpec = dbSpec
+    this._model = modelInstance.constructor as { new (): T }
   }
 
   processor(): SQLSearcher {
@@ -27,7 +26,7 @@ export class FeedSearcher<T extends FeedBase> {
    * @description Query single object, return an model instance when retFeed = true
    * @param retFeed
    */
-  async querySingle(retFeed = true): Promise<undefined | T | {[p: string]: any}> {
+  async querySingle(retFeed = true): Promise<undefined | T | { [p: string]: any }> {
     const items = await this.queryList(0, 1, retFeed)
     if (items.length > 0) {
       return items[0]
@@ -39,7 +38,7 @@ export class FeedSearcher<T extends FeedBase> {
    * @deprecated Return model instance is recommended, please use queryAllFeeds instead.
    * @param retFeed {boolean}
    */
-  async queryAll(retFeed: boolean = false): Promise<({[p: string]: any} | T)[]> {
+  async queryAll(retFeed: boolean = false): Promise<({ [p: string]: any } | T)[]> {
     return this.queryList(-1, 0, retFeed)
   }
 
@@ -49,14 +48,14 @@ export class FeedSearcher<T extends FeedBase> {
    * @param length {number}
    * @param retFeed {boolean}
    */
-  async queryList(page: number, length: number, retFeed: boolean = false): Promise<({[p: string]: any} | T)[]> {
+  async queryList(page: number, length: number, retFeed: boolean = false): Promise<({ [p: string]: any } | T)[]> {
     this._searcher.setPageInfo(page, length)
     const items = await this._searcher.queryList()
     return this.formatList(items, retFeed)
   }
 
-  formatList(items: {}[], retFeed = false): ({[p: string]: any} | T)[] {
-    return items.map((dic: {}): {[p: string]: any} | T => {
+  formatList(items: {}[], retFeed = false): ({ [p: string]: any } | T)[] {
+    return items.map((dic: {}): { [p: string]: any } | T => {
       const obj = new this._model()
       obj.fc_generate(dic)
       return retFeed ? obj : obj.fc_encode()
@@ -135,7 +134,7 @@ export class FeedSearcher<T extends FeedBase> {
    * @param params
    */
   async findWithParams(params: {}): Promise<T | undefined> {
-    const tools = new DBTools(this._protocol)
+    const tools = new DBTools(this._dbSpec)
     const data = await tools.makeSearcher(params).querySingle()
     if (data) {
       const obj = new this._model()
@@ -162,25 +161,21 @@ export class FeedSearcher<T extends FeedBase> {
    * @param uid {string | number}
    */
   async findWithUID(uid: string | number): Promise<T | undefined> {
-    const pKey = this._protocol.primaryKey()
-    if (typeof pKey === 'string') {
-      const params: {[p: string]: any} = {}
-      params[pKey as string] = uid
-      return this.findWithParams(params)
-    }
-    assert.fail(`${this._model.name}: primary key is not single.`)
+    assert.ok(this._dbSpec.primaryKeys.length === 1, 'PrimaryKey must be single item in this case.')
+    const params: { [p: string]: any } = {}
+    params[this._dbSpec.primaryKey] = uid
+    return this.findWithParams(params)
   }
 
-  async checkExists(params: {[p: string]: any} | string | number): Promise<boolean> {
+  async checkExists(params: { [p: string]: any } | string | number): Promise<boolean> {
     if (typeof params !== 'object') {
-      const pKey = this._protocol.primaryKey()
-      assert.ok(typeof pKey === 'string', `${this.constructor.name}: primaryKey must be an string.`)
+      assert.ok(this._dbSpec.primaryKeys.length === 1, 'PrimaryKey must be single item in this case.')
       const uid = params
-      const params1: {[p: string]: any} = {}
-      params1[pKey as string] = uid
+      const params1: { [p: string]: any } = {}
+      params1[this._dbSpec.primaryKey] = uid
       params = params1
     }
-    const tools = new DBTools(this._protocol)
+    const tools = new DBTools(this._dbSpec)
     return (await tools.makeSearcher(params).queryCount()) > 0
   }
 }

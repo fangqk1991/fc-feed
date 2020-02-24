@@ -1,28 +1,28 @@
-import { DBProtocol, DBTools, Transaction } from 'fc-sql'
+import { DBProtocol, DBProtocolV2, DBSpec, DBTools, Transaction } from 'fc-sql'
 import { FCModel } from 'fc-model'
 import { FeedSearcher } from './FeedSearcher'
 import * as assert from 'assert'
 
 interface MapProtocol {
-  [p: string]: any;
+  [p: string]: any
 }
 
 export interface DBObserver {
-  onAdd(newFeed: FeedBase): Promise<void>;
-  onUpdate(newFeed: FeedBase, changedMap: any, oldData?: any): Promise<void>;
-  onDelete(oldFeed: FeedBase): Promise<void>;
+  onAdd(newFeed: FeedBase): Promise<void>
+  onUpdate(newFeed: FeedBase, changedMap: any, oldData?: any): Promise<void>
+  onDelete(oldFeed: FeedBase): Promise<void>
 }
 
 export interface FilterOptions {
-  _sortKey?: string;
-  _sortDirection?: string;
-  _offset?: number;
-  _length?: number;
-  [p: string]: any;
+  _sortKey?: string
+  _sortDirection?: string
+  _offset?: number
+  _length?: number
+  [p: string]: any
 }
 
 interface Params {
-  [p: string]: number | string;
+  [p: string]: number | string
 }
 
 const _buildSortRule = (params: any) => {
@@ -57,7 +57,10 @@ const _buildLimitInfo = (params: any) => {
  * @description When FeedBase's DBProtocol exists, the sql functions would take effect
  */
 export class FeedBase extends FCModel {
-  protected _dbProtocol!: DBProtocol
+  /**
+   * @deprecated Use dbSpec() instead.
+   */
+  private _dbProtocol!: DBProtocol
   protected _dataBackup: { [p: string]: any } | null = null
   protected _reloadOnAdded = false
   protected _reloadOnUpdated = false
@@ -68,14 +71,11 @@ export class FeedBase extends FCModel {
   }
 
   private updateAutoIncrementInfo(lastInsertId: number) {
-    // console.log(`lastInsertId: ${lastInsertId}`)
-    assert.ok(!!this._dbProtocol, '_dbProtocol must be not empty')
-
-    if (lastInsertId > 0 && typeof this._dbProtocol.primaryKey() === 'string') {
-      const primaryKey = this._dbProtocol.primaryKey()
+    const dbSpec = this.dbSpec()
+    if (lastInsertId > 0 && dbSpec.primaryKeys.length === 1) {
       const mapper = this.fc_propertyMapper()
       for (const propertyKey in mapper) {
-        if (mapper[propertyKey] === primaryKey) {
+        if (mapper[propertyKey] === dbSpec.primaryKeys[0]) {
           const _this = this as any
           if (_this[propertyKey] === null || _this[propertyKey] === undefined) {
             _this[propertyKey] = lastInsertId
@@ -87,10 +87,36 @@ export class FeedBase extends FCModel {
   }
 
   /**
+   * @deprecated Use dbSpec instead
    * @description Sub class can override the function.
    */
-  dbProtocol(): DBProtocol {
+  public dbProtocol(): DBProtocol {
     return this._dbProtocol as DBProtocol
+  }
+
+  private _dbSpec!: DBSpec
+  private _dbProtocolV2!: DBProtocolV2
+
+  /**
+   * @deprecated Use setDBProtocolV2 instead
+   * @param protocol
+   */
+  setDBProtocol(protocol: DBProtocol) {
+    this._dbProtocol = protocol
+    this.setDBProtocolV2(protocol)
+  }
+
+  setDBProtocolV2(protocol: DBProtocolV2) {
+    this._dbProtocolV2 = protocol
+    this._dbSpec = new DBSpec(this._dbProtocolV2)
+  }
+
+  dbSpec(): DBSpec {
+    if (!this._dbSpec) {
+      assert.ok(!!this._dbProtocolV2, '_dbProtocolV2 must be not empty')
+      this._dbSpec = new DBSpec(this._dbProtocolV2)
+    }
+    return this._dbSpec
   }
 
   /**
@@ -98,17 +124,8 @@ export class FeedBase extends FCModel {
    */
   fc_uidStr(): string {
     const data = this.fc_encode()
-    assert.ok(!!this._dbProtocol, 'this._dbProtocol must be an instance of DBProtocol')
-
-    let uid = ''
-    const protocol = this._dbProtocol as DBProtocol
-    const pKey = protocol.primaryKey()
-    if (Array.isArray(pKey)) {
-      uid = pKey.map((key: string): string => `${data[key]}`).join(',')
-    } else {
-      uid = data[pKey]
-    }
-    return uid
+    const dbSpec = this.dbSpec()
+    return dbSpec.primaryKeys.map((key: string): string => `${data[key]}`).join(',')
   }
 
   /**
@@ -168,10 +185,8 @@ export class FeedBase extends FCModel {
   }
 
   public async addToDB(transaction?: Transaction) {
-    assert.ok(!!this._dbProtocol, '_dbProtocol must be not empty')
-
     const data = this.fc_encode()
-    const tools = new DBTools(this._dbProtocol, transaction)
+    const tools = new DBTools(this.dbSpec(), transaction)
     const performer = tools.makeAdder(data)
     const lastInsertId = await performer.execute()
     this.updateAutoIncrementInfo(lastInsertId)
@@ -184,10 +199,8 @@ export class FeedBase extends FCModel {
   }
 
   public async strongAddToDB(transaction?: Transaction) {
-    assert.ok(!!this._dbProtocol, '_dbProtocol must be not empty')
-
     const data = this.fc_encode()
-    const tools = new DBTools(this._dbProtocol, transaction)
+    const tools = new DBTools(this.dbSpec(), transaction)
     await tools.strongAdd(data)
     if (this._reloadOnAdded) {
       await this.reloadDataFromDB(transaction)
@@ -198,10 +211,8 @@ export class FeedBase extends FCModel {
   }
 
   public async weakAddToDB(transaction?: Transaction) {
-    assert.ok(!!this._dbProtocol, '_dbProtocol must be not empty')
-
     const data = this.fc_encode()
-    const tools = new DBTools(this._dbProtocol, transaction)
+    const tools = new DBTools(this.dbSpec(), transaction)
     await tools.weakAdd(data)
     if (this._reloadOnAdded) {
       await this.reloadDataFromDB(transaction)
@@ -212,7 +223,6 @@ export class FeedBase extends FCModel {
   }
 
   public async updateToDB(transaction?: Transaction) {
-    assert.ok(!!this._dbProtocol, '_dbProtocol must be not empty')
     assert.ok(!!this._dataBackup, 'You must use fc_edit before fc_update!')
 
     const dataBackup = this._dataBackup as { [p: string]: any }
@@ -220,7 +230,7 @@ export class FeedBase extends FCModel {
     const params: { [p: string]: any } = {}
     const editedMap: { [p: string]: any } = {}
 
-    for (const key in data) {
+    for (const key of Object.keys(data)) {
       const value = data[key]
       if (!(key in dataBackup)) {
         continue
@@ -236,12 +246,11 @@ export class FeedBase extends FCModel {
       }
     }
 
-    const pKey = this._dbProtocol.primaryKey()
-    const pKeys = Array.isArray(pKey) ? pKey : [pKey]
-    pKeys.forEach((key: string): void => {
+    const dbSpec = this.dbSpec()
+    dbSpec.primaryKeys.forEach((key: string): void => {
       params[key] = data[key]
     })
-    const tools = new DBTools(this._dbProtocol, transaction)
+    const tools = new DBTools(dbSpec, transaction)
     const performer = tools.makeModifier(params)
     await performer.execute()
     if (this._reloadOnUpdated) {
@@ -255,10 +264,8 @@ export class FeedBase extends FCModel {
   }
 
   public async deleteFromDB(transaction?: Transaction) {
-    assert.ok(!!this._dbProtocol, '_dbProtocol must be not empty')
-
     const data = this.fc_encode()
-    const tools = new DBTools(this._dbProtocol, transaction)
+    const tools = new DBTools(this.dbSpec(), transaction)
     const performer = tools.makeRemover(data)
     await performer.execute()
     if (this.dbObserver) {
@@ -317,13 +324,9 @@ export class FeedBase extends FCModel {
   }
 
   public async findFeedInDB(transaction?: Transaction) {
-    assert.ok(!!this._dbProtocol, '_dbProtocol must be not empty')
-
     const data = this.fc_encode()
     const params: any = {}
-    const pKey = this._dbProtocol.primaryKey()
-    const pKeys = Array.isArray(pKey) ? pKey : [pKey]
-    pKeys.forEach((key: string): void => {
+    this.dbSpec().primaryKeys.forEach((key: string): void => {
       params[key] = data[key]
     })
     const clazz = this.constructor as any
@@ -336,7 +339,7 @@ export class FeedBase extends FCModel {
 
   public static dbSearcher(params: { [p: string]: number | string } = {}, transaction?: Transaction) {
     const feed = new this() as FeedBase
-    const tools = new DBTools(feed._dbProtocol, transaction)
+    const tools = new DBTools(feed.dbSpec(), transaction)
     return tools.makeSearcher(params)
   }
   /**
@@ -358,10 +361,10 @@ export class FeedBase extends FCModel {
     transaction?: Transaction
   ): Promise<T | undefined> {
     const feed = new this() as FeedBase
-    const pKey = feed._dbProtocol.primaryKey()
-    assert.ok(typeof pKey === 'string', 'PrimaryKey must be single item in this case.')
+    const dbSpec = feed.dbSpec()
+    assert.ok(dbSpec.primaryKeys.length === 1, 'PrimaryKey must be single item in this case.')
     const params: { [p: string]: any } = {}
-    params[pKey as string] = uid
+    params[dbSpec.primaryKey] = uid
     return (this as any).findOne(params, transaction)
   }
 
@@ -385,7 +388,7 @@ export class FeedBase extends FCModel {
   ): Promise<T | undefined> {
     assert.ok(typeof params === 'object', `params must be an object.`)
     const feed = new this() as T
-    const tools = new DBTools(feed._dbProtocol, transaction)
+    const tools = new DBTools(feed.dbSpec(), transaction)
     const searcher = tools.makeSearcher(params)
     const data = await searcher.querySingle()
     if (data) {
@@ -397,7 +400,7 @@ export class FeedBase extends FCModel {
 
   public static async count(params: Params = {}, transaction?: Transaction) {
     const feed = new this() as FeedBase
-    const tools = new DBTools(feed._dbProtocol, transaction)
+    const tools = new DBTools(feed.dbSpec(), transaction)
     const searcher = tools.makeSearcher(params)
     return searcher.queryCount()
   }
