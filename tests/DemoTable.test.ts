@@ -25,14 +25,14 @@ describe('Test DemoTable', (): void => {
       const items = await searcher.queryAllFeeds()
       const watchUID = (items[0] as any)['uid'] as string
       const feed = await DemoTable.prepareOne({
-        uid: watchUID
+        uid: watchUID,
       })
       feed.fc_edit()
       feed.key1 = 'K1 - New'
       await feed.updateToDB()
 
       const feed2 = await DemoTable.prepareOne({
-        uid: watchUID
+        uid: watchUID,
       })
 
       assert.ok(feed.uid === feed2.uid)
@@ -42,7 +42,7 @@ describe('Test DemoTable', (): void => {
       await feed.deleteFromDB()
 
       const feed3 = await DemoTable.findOne({
-        uid: watchUID
+        uid: watchUID,
       })
       assert.ok(feed3 === undefined)
     }
@@ -50,16 +50,16 @@ describe('Test DemoTable', (): void => {
     {
       const items = (await searcher.queryAllFeeds()) as DemoTable[]
       const watchUID = items[0].uid
-      const feed = await DemoTable.findOne({
-        uid: watchUID
-      }) as DemoTable
+      const feed = (await DemoTable.findOne({
+        uid: watchUID,
+      })) as DemoTable
       feed.fc_edit()
       feed.key1 = 'K1 - New'
       await feed.fc_update()
 
-      const feed2 = await DemoTable.findOne({
-        uid: watchUID
-      }) as DemoTable
+      const feed2 = (await DemoTable.findOne({
+        uid: watchUID,
+      })) as DemoTable
 
       assert.ok(feed.uid === feed2.uid)
       assert.ok(feed.key2 === feed2.key2)
@@ -67,9 +67,9 @@ describe('Test DemoTable', (): void => {
 
       await feed.fc_delete()
 
-      const feed3 = await DemoTable.findOne({
-        uid: watchUID
-      }) as DemoTable
+      const feed3 = (await DemoTable.findOne({
+        uid: watchUID,
+      })) as DemoTable
       assert.ok(!feed3)
     }
   })

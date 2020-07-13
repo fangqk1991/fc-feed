@@ -66,14 +66,14 @@ describe('Test DemoTable.Transaction', (): void => {
       const transactionRunner = database.createTransactionRunner()
       await transactionRunner.commit(async (transaction) => {
         for (let i = 0; i < count; ++i) {
-          console.log(`Fake operation: Index - ${i}`)
+          console.info(`Fake operation: Index - ${i}`)
 
           const feed = new DemoTable()
           feed.key1 = `K1 - ${Math.random()}`
           feed.key2 = `K2 - ${Math.random()}`
           await feed.addToDB(transaction)
           assert.ok(feed.uid > 0)
-          console.log(`Transaction callback: [uid: ${feed.uid}]`)
+          console.info(`Transaction callback: [uid: ${feed.uid}]`)
 
           {
             const items = await database.query('SELECT COUNT(*) AS count FROM demo_table')

@@ -1,4 +1,4 @@
-import { DBObserver, FeedBase } from '../../src'
+import { DBObserver, FeedBase } from '../src'
 import { DBProtocol, FCDatabase } from 'fc-sql'
 
 const database = FCDatabase.getInstance()
@@ -17,7 +17,7 @@ database.init({
   // }
 })
 
-class MyProtocol implements DBProtocol {
+export class DemoProtocol implements DBProtocol {
   database(): FCDatabase {
     return database
   }
@@ -31,45 +31,29 @@ class MyProtocol implements DBProtocol {
   }
 
   cols(): string[] {
-    return [
-      'uid',
-      'key1',
-      'key2',
-      'some_date',
-      'some_datetime',
-      'create_time',
-      'update_time',
-    ]
+    return ['uid', 'key1', 'key2', 'some_date', 'some_datetime', 'create_time', 'update_time']
   }
 
   insertableCols(): string[] {
-    return [
-      'key1',
-      'key2',
-      'some_date',
-      'some_datetime',
-    ]
+    return ['key1', 'key2', 'some_date', 'some_datetime']
   }
 
   modifiableCols(): string[] {
-    return [
-      'key1',
-      'key2',
-    ]
+    return ['key1', 'key2']
   }
 }
 
 class MyObserver implements DBObserver {
   async onAdd(newFeed: FeedBase): Promise<void> {
-    console.log(`onAdd: `, newFeed.toString())
+    console.info(`onAdd: `, newFeed.toString())
   }
 
   async onDelete(oldFeed: FeedBase): Promise<void> {
-    console.log(`onDelete: `, oldFeed.toString())
+    console.info(`onDelete: `, oldFeed.toString())
   }
 
   async onUpdate(newFeed: FeedBase, changedMap: any): Promise<void> {
-    console.log(`onUpdate: `, newFeed.toString(), changedMap)
+    console.info(`onUpdate: `, newFeed.toString(), changedMap)
   }
 }
 
@@ -82,7 +66,7 @@ export default class DemoTable extends FeedBase {
 
   constructor() {
     super()
-    this.setDBProtocol(new MyProtocol())
+    this.setDBProtocol(new DemoProtocol())
     this.dbObserver = new MyObserver()
     this._reloadOnAdded = true
     this._reloadOnUpdated = true
