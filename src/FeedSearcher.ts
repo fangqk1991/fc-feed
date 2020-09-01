@@ -39,7 +39,7 @@ export class FeedSearcher<T extends FeedBase> {
    * @param retFeed {boolean}
    */
   async queryAll(retFeed: boolean = false): Promise<({ [p: string]: any } | T)[]> {
-    return this.queryList(-1, 0, retFeed)
+    return this.queryList(-1, -1, retFeed)
   }
 
   /**
