@@ -182,7 +182,7 @@ export class FeedBase extends FCModel {
    * @deprecated Use updateToDB instead.
    * @description Must use fc_edit before fc_update, changes in editing mode will be pass to database, (Should match primary key).
    */
-  async fc_update(options: { [p: string]: any } = {}): Promise<{}> {
+  async fc_update(options: { [p: string]: any } = {}) {
     assert.ok(!!this._dataBackup, 'You must use fc_edit before fc_update!')
 
     const propertyMap = this.fc_propertyMapper()
@@ -433,13 +433,14 @@ export class FeedBase extends FCModel {
   public static PAGE_LENGTH_DEFAULT = 10
   public static PAGE_LENGTH_CEIL = 1000
   public static async getPageResult<T extends FeedBase>(
-    clazz: { new (): T },
+    this: { new (): T },
     filterParams: FilterOptions = {}
   ): Promise<PageDataV3<MapProtocol>> {
-    const feed = new clazz() as T
+    const feed = new this() as T
+    const clazz = (this as any) as typeof FeedBase
 
     filterParams._offset = filterParams._offset || 0
-    filterParams._length = Math.min(filterParams._length || this.PAGE_LENGTH_DEFAULT, this.PAGE_LENGTH_CEIL)
+    filterParams._length = Math.min(filterParams._length || clazz.PAGE_LENGTH_DEFAULT, clazz.PAGE_LENGTH_CEIL)
 
     const searcher = feed.fc_searcher(filterParams)
 
