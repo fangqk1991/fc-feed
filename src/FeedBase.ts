@@ -3,6 +3,17 @@ import { FCModel } from 'fc-model'
 import { FeedSearcher } from './FeedSearcher'
 import * as assert from 'assert'
 
+interface PageDataV3<T> {
+  // 偏移量
+  offset: number
+  // 当前结果数据（items）长度
+  length: number
+  // 满足请求筛选条件的数据总长度
+  totalCount: number
+  // 返回数据实体
+  items: T[]
+}
+
 interface MapProtocol {
   [p: string]: any
 }
@@ -413,5 +424,31 @@ export class FeedBase extends FCModel {
     const tools = new DBTools(feed.dbSpec(), transaction)
     const searcher = tools.makeSearcher(params)
     return searcher.queryCount()
+  }
+
+  public toJSON(): MapProtocol {
+    return this.fc_pureModel()
+  }
+
+  public static PAGE_LENGTH_DEFAULT = 10
+  public static PAGE_LENGTH_CEIL = 1000
+  public static async getPageResult<T extends FeedBase>(
+    clazz: { new (): T },
+    filterParams: FilterOptions = {}
+  ): Promise<PageDataV3<MapProtocol>> {
+    const feed = new clazz() as T
+
+    filterParams._offset = filterParams._offset || 0
+    filterParams._length = Math.min(filterParams._length || this.PAGE_LENGTH_DEFAULT, this.PAGE_LENGTH_CEIL)
+
+    const searcher = feed.fc_searcher(filterParams)
+
+    const feeds = await searcher.queryFeeds()
+    return {
+      offset: Number(filterParams._offset),
+      length: feeds.length,
+      totalCount: await searcher.queryCount(),
+      items: feeds.map((feed) => feed.toJSON()),
+    }
   }
 }
