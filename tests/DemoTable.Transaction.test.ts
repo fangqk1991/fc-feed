@@ -51,7 +51,7 @@ describe('Test DemoTable.Transaction', (): void => {
         }
         throw new Error(errorMessage)
       })
-    } catch (e) {
+    } catch (e: any) {
       assert.equal(e.message, errorMessage)
     }
 
