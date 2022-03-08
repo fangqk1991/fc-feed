@@ -1,5 +1,5 @@
 import { DBObserver, FeedBase } from '../src'
-import { DBProtocol, FCDatabase } from 'fc-sql'
+import { DBProtocolV2, FCDatabase } from 'fc-sql'
 
 const database = FCDatabase.getInstance()
 database.init({
@@ -17,7 +17,7 @@ database.init({
   // }
 })
 
-export class DemoProtocol implements DBProtocol {
+export class DemoProtocol implements DBProtocolV2 {
   database(): FCDatabase {
     return database
   }
@@ -66,7 +66,7 @@ export default class DemoTable extends FeedBase {
 
   constructor() {
     super()
-    this.setDBProtocol(new DemoProtocol())
+    this.setDBProtocolV2(new DemoProtocol())
     this.dbObserver = new MyObserver()
     this._reloadOnAdded = true
     this._reloadOnUpdated = true

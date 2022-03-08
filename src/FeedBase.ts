@@ -1,4 +1,4 @@
-import { DBProtocol, DBProtocolV2, DBSpec, DBTools, Transaction } from 'fc-sql'
+import { DBProtocolV2, DBSpec, DBTools, Transaction } from 'fc-sql'
 import { FCModel } from 'fc-model'
 import { FeedSearcher } from './FeedSearcher'
 import * as assert from 'assert'
@@ -64,14 +64,7 @@ const _buildLimitInfo = (params: any) => {
   }
 }
 
-/**
- * @description When FeedBase's DBProtocol exists, the sql functions would take effect
- */
 export class FeedBase extends FCModel {
-  /**
-   * @deprecated Use dbSpec() instead.
-   */
-  private _dbProtocol!: DBProtocol
   protected _dataBackup: { [p: string]: any } | null = null
   protected _reloadOnAdded = false
   protected _reloadOnUpdated = false
@@ -97,25 +90,8 @@ export class FeedBase extends FCModel {
     }
   }
 
-  /**
-   * @deprecated Use dbSpec instead
-   * @description Sub class can override the function.
-   */
-  public dbProtocol(): DBProtocol {
-    return this._dbProtocol as DBProtocol
-  }
-
   private _dbSpec!: DBSpec
   private _dbProtocolV2!: DBProtocolV2
-
-  /**
-   * @deprecated Use setDBProtocolV2 instead
-   * @param protocol
-   */
-  setDBProtocol(protocol: DBProtocol) {
-    this._dbProtocol = protocol
-    this.setDBProtocolV2(protocol)
-  }
 
   setDBProtocolV2(protocol: DBProtocolV2) {
     this._dbProtocolV2 = protocol
@@ -437,7 +413,7 @@ export class FeedBase extends FCModel {
     filterParams: FilterOptions = {}
   ): Promise<PageDataV3<MapProtocol>> {
     const feed = new this() as T
-    const clazz = (this as any) as typeof FeedBase
+    const clazz = this as any as typeof FeedBase
 
     filterParams._offset = filterParams._offset || 0
     filterParams._length = Math.min(filterParams._length || clazz.PAGE_LENGTH_DEFAULT, clazz.PAGE_LENGTH_CEIL)
