@@ -97,4 +97,11 @@ describe('Test DemoTable', (): void => {
       }
     }
   })
+
+  it(`Test fc_searcher`, async () => {
+    const pageResult = await DemoTable.getPageResult<{}>()
+    pageResult.items.forEach((item) => {
+      console.info(item)
+    })
+  })
 })
