@@ -414,8 +414,11 @@ export class FeedBase extends FCModel {
 
   public static PAGE_LENGTH_DEFAULT = 10
   public static PAGE_LENGTH_CEIL = 1000
-  public static async getPageResult<T = MapProtocol>(filterParams: FilterOptions = {}): Promise<PageDataV3<T>> {
-    const feed = new this()
+  public static async getPageResult<T extends FeedBase>(
+    this: { new (): T },
+    filterParams: FilterOptions = {}
+  ): Promise<PageDataV3<MapProtocol>> {
+    const feed = new this() as T
     const clazz = this as any as typeof FeedBase
     clazz.limitParams(filterParams)
     const searcher = feed.fc_searcher(filterParams)
@@ -424,7 +427,7 @@ export class FeedBase extends FCModel {
       offset: Number(filterParams._offset),
       length: feeds.length,
       totalCount: await searcher.queryCount(),
-      items: feeds.map((feed) => feed.toJSON() as T),
+      items: feeds.map((feed) => feed.toJSON()),
     }
   }
 }
